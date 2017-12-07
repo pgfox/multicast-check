@@ -34,6 +34,7 @@ public class MulticastChecker {
             String multicastAddress = System.getProperty("MULTICAST_ADDRESS", "231.7.7.7");
             int groupPort = Integer.parseInt(System.getProperty("GROUP_PORT", "9876"));
             String clientID = System.getProperty("CLIENT_ID");
+            boolean listener = Boolean.parseBoolean(System.getProperty("LISTENER", "false"));
 
             if (clientID == null) {
                 System.out.println("system property -DCLIENT_ID=XXXX is required");
@@ -47,14 +48,17 @@ public class MulticastChecker {
             System.out.println("Using GROUP_PORT " + groupPort);
             System.out.println("Using CLIENT_ID " + clientID);
             System.out.println("Using SEND_DELAY " + sendDelay);
+            System.out.println("Using LISTENER " + listener);
 
             InetAddress group = InetAddress.getByName(multicastAddress);
 
 
-            // create a broadcaster
-            MulticastBroadcaster broadcaster = new MulticastBroadcaster(group, groupPort, clientID, sendDelay);
-            executorService.submit(broadcaster);
-
+            if(!listener) {
+                System.out.println("CREATING A BROADCASTER***");
+                // create a broadcaster
+                MulticastBroadcaster broadcaster = new MulticastBroadcaster(group, groupPort, clientID, sendDelay);
+                executorService.submit(broadcaster);
+            }
 
             // create a listener
             MulticastListener multicastListener = new MulticastListener(group, groupPort, clientID);
@@ -143,7 +147,10 @@ public class MulticastChecker {
                 socket = new MulticastSocket(port);
                 socket.joinGroup(group);
 
+                System.out.println(new Date()+" LISTENER: Starting ");
+
                 while (true) {
+
                     byte[] buf = new byte[256];
                     DatagramPacket recv = new DatagramPacket(buf, buf.length);
                     socket.receive(recv);
